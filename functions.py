@@ -38,10 +38,20 @@ def copyStore(source, destination):
     iterSource = source.get_iter_first()
 
     while iterSource != None:
-        destination.append(source[iterSource])
+        nbColumn = source.get_n_columns()
+        l = [source[iterSource][i] for i in range(nbColumn)]
+        destination.append(l)
         iterSource = source.iter_next(iterSource)
 
 def replaceNone(l):
     for i in range(len(l)):
         if l[i] == None:
             l[i] = ""
+
+def entryExist(model, value, column):
+    iterModel = model.get_iter_first()
+    while iterModel != None:
+        if model[iterModel][column] == value:
+            return True
+        iterModel = model.iter_next()
+    return False
