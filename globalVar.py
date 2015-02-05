@@ -1,0 +1,31 @@
+databaseWindow = None
+
+bestiaryModel = ["Type",
+                 "ID",  
+                 "Name",
+                 "PV",
+                 "MP",
+                 "AD",
+                 "AP",
+                 "PR",
+                 "MR",
+                 "Size",
+                 "Weight",
+                 "Speed",
+                 "Attack Speed",
+                 "Description"]
+
+armoryModel =  ["Class",
+                "Type",
+                "ID",
+                "Name",
+                "PV",
+                "MP",
+                "AD",
+                "AP",
+                "PR",
+                "MR",
+                "Weight",
+                "Speed",
+                "Attack Speed",
+                "Description"]
