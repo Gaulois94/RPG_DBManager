@@ -76,8 +76,9 @@ class CreatePower:
         self.box.pack_start(menuBox, False, False, 0)
 
     def addPower(self, widget):
-        self.store.append([self.typeWidget.get_active_text(),\
-                           self.valueWidget.get_text()])
+        if not entryExist(self.store, self.typeWidget.get_active_text(), 0):
+            self.store.append([self.typeWidget.get_active_text(),\
+                               self.valueWidget.get_text()])
 
     def deletePower(self, widget):
         selection = self.tree.get_selection()
