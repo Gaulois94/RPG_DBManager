@@ -1,7 +1,7 @@
 databaseWindow = None
 
-bestiaryModel = ["Type",
-                 "ID",  
+bestiaryModel = ["ID",
+                 "Type",
                  "Name",
                  "PV",
                  "MP",
@@ -15,9 +15,9 @@ bestiaryModel = ["Type",
                  "Attack Speed",
                  "Description"]
 
-armoryModel =  ["Class",
+armoryModel =  ["ID",
+                "Class",
                 "Type",
-                "ID",
                 "Name",
                 "PV",
                 "MP",
