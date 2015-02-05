@@ -5,7 +5,7 @@ from Tab import Tab
 
 class BestiaryTab(Tab):
     def __init__(self):
-        store     = Gtk.ListStore(str, str, str, str, str, str, str, str, str, str, str, str, str, str)
+        store     = Gtk.ListStore(int, str, str, int, int, int, int, int, int, float, float, float, float, str)
         Tab.__init__(self, store)
 
         for i, value in enumerate(bestiaryModel):
@@ -157,16 +157,16 @@ class BestiaryTab(Tab):
 
     def getInsertValue(self):
         descriptionBuffer = self.descriptionWidget.get_buffer()
-        return [self.typeWidget.get_active_text(),\
-                str(self.idEntry),\
+        return [self.idEntry,\
+                self.typeWidget.get_active_text(),\
                 self.nameWidget.get_text(),\
-                str(int(self.pvWidget.get_value())), str(int(self.mpWidget.get_value())),\
-                str(int(self.adWidget.get_value())), str(int(self.apWidget.get_value())),\
-                str(int(self.prWidget.get_value())), str(int(self.mrWidget.get_value())),\
-                str(float(self.sizeWidget.get_value())),\
-                str(float(self.weightWidget.get_value())),\
-                str(float(self.speedWidget.get_value())),\
-                str(float(self.attackSpeedWidget.get_value())),\
+                int(self.pvWidget.get_value()), int(self.mpWidget.get_value()),\
+                int(self.adWidget.get_value()), int(self.apWidget.get_value()),\
+                int(self.prWidget.get_value()), int(self.mrWidget.get_value()),\
+                float(self.sizeWidget.get_value()),\
+                float(self.weightWidget.get_value()),\
+                float(self.speedWidget.get_value()),\
+                float(self.attackSpeedWidget.get_value()),\
                 descriptionBuffer.get_text(descriptionBuffer.get_start_iter(), descriptionBuffer.get_end_iter(), False)\
                ]
 
@@ -191,14 +191,14 @@ class BestiaryTab(Tab):
     def editRenderer(self, renderer, path, text, value):
         if value in ["PV", "MP", "AD", "AP", "PR", "MR"]:
             try:
-                text = str(int(float(text)))
+                text = int(float(text))
             except:
-                text = "0"
+                text = 0
         elif value in ["Size", "Weight", "Speed", "Attack Speed"]:
             try:
-                text = str(float(text))
+                text = float(text)
             except:
-                text = "0.0"
+                text = 0.0
 
         elif value == "Type":
             addTextInComboBoxText(self.typeWidget, text)

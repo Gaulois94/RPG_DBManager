@@ -7,7 +7,7 @@ from Tab import Tab
 class ArmoryTab(Tab):
     def __init__(self, databaseWindow):
         self.databaseWindow = databaseWindow
-        store = Gtk.ListStore(str, str, str, str, str, str, str, str, str, str, str, str, str, str)
+        store = Gtk.ListStore(int, str, str, str, int, int, int, int, int, int, float, float, float, str)
 
         Tab.__init__(self, store)
         self.powerDict = dict()
@@ -165,20 +165,20 @@ class ArmoryTab(Tab):
     def addEntry(self, widget):
         Tab.addEntry(self)
         addEntryInComboBoxText(self.typeWidget)
-        self.powerDict[str(self.idEntry)] = CreatePower(self.databaseWindow.handlePower)
+        self.powerDict[self.idEntry] = CreatePower(self.databaseWindow.handlePower)
 
     def getInsertValue(self):
         descriptionBuffer = self.descriptionWidget.get_buffer()
-        return [self.classWidget.get_active_text(),\
+        return [self.idEntry,\
+                self.classWidget.get_active_text(),\
                 self.typeWidget.get_active_text(),\
-                str(self.idEntry),\
                 self.nameWidget.get_text(),\
-                str(int(self.pvWidget.get_value())), str(int(self.mpWidget.get_value())),\
-                str(int(self.adWidget.get_value())), str(int(self.apWidget.get_value())),\
-                str(int(self.prWidget.get_value())), str(int(self.mrWidget.get_value())),\
-                str(float(self.weightWidget.get_value())),\
-                str(float(self.speedWidget.get_value())),\
-                str(float(self.attackSpeedWidget.get_value())),\
+                int(self.pvWidget.get_value()), int(self.mpWidget.get_value()),\
+                int(self.adWidget.get_value()), int(self.apWidget.get_value()),\
+                int(self.prWidget.get_value()), int(self.mrWidget.get_value()),\
+                float(self.weightWidget.get_value()),\
+                float(self.speedWidget.get_value()),\
+                float(self.attackSpeedWidget.get_value()),\
                 descriptionBuffer.get_text(descriptionBuffer.get_start_iter(), descriptionBuffer.get_end_iter(), False)\
                ]
 
@@ -214,14 +214,14 @@ class ArmoryTab(Tab):
     def editRenderer(self, renderer, path, text, value):
         if value in ["PV", "MP", "AD", "AP", "PR", "MR"]:
             try:
-                text = str(int(float(text)))
+                text = int(float(text))
             except:
-                text = "0"
+                text = 0
         elif value in ["Weight", "Speed", "Attack Speed"]:
             try:
-                text = str(float(text))
+                text = float(text)
             except:
-                text = "0.0"
+                text = 0.0
 
         elif value == "Type":
             addTextInComboBoxText(self.typeWidget, text)
@@ -231,6 +231,8 @@ class ArmoryTab(Tab):
 
     def appendStore(self, l):
         self.store.append(l)
-        addTextInComboBoxText(self.typeWidget, l[1])
-        self.idEntry=l[0]
-        self.powerDict[str(l[0])] = CreatePower(self.databaseWindow.handlePower)
+        idIndex = armoryModel.index("ID")
+        typeIndex = armoryModel.index("Type")
+        addTextInComboBoxText(self.typeWidget, l[typeIndex])
+        self.idEntry=l[idIndex]
+        self.powerDict[l[idIndex]] = CreatePower(self.databaseWindow.handlePower)
