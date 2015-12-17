@@ -17,7 +17,9 @@ class Tab(Gtk.Box):
 
     def addEntry(self):
         self.idEntry = self.idEntry+1
-        self.store.append(self.getInsertValue())
+        v = self.getInsertValue()
+        if v:
+            self.store.append(v)
 
     def deleteEntry(self, modelStr):
         selection = self.tree.get_selection()
@@ -33,7 +35,7 @@ class Tab(Gtk.Box):
 
        # self.resetID(modelStr)
 
-    def clearEntry(self):
+    def clearEntries(self):
         self.store.clear()
         self.idEntry = 0
 

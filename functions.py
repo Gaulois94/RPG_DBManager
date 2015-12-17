@@ -1,10 +1,11 @@
 from gi.repository import Gtk
+from databaseFunctions import *
 
-def addEntryInComboBoxText(comboBoxText):
+def addEntryInComboBoxText(comboBoxText, f=None, *args):
     typeText = comboBoxText.get_active_text()
-    addTextInComboBoxText(comboBoxText, typeText)
+    addTextInComboBoxText(comboBoxText, typeText, f, *args)
 
-def addTextInComboBoxText(comboBoxText, typeText):
+def addTextInComboBoxText(comboBoxText, typeText, f=None, *args):
     if typeText == "":
         return
 
@@ -20,6 +21,8 @@ def addTextInComboBoxText(comboBoxText, typeText):
 
     if not b:
         comboBoxText.append_text(typeText)
+        if f != None:
+            f(*args, typeText)
 
 def quitWindow(self, window):
     window.destroy()

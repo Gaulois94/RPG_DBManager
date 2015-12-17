@@ -1,9 +1,11 @@
 from gi.repository import Gtk
 import globalVar
 from functions import *
+import databaseFunctions
 
 class EditPower:
-    def __init__(self):
+    def __init__(self, databaseWindow):
+        self.databaseWindow = databaseWindow
         #Set the Store part 
         self.store    = Gtk.ListStore(str, bool, str, str, str)
         self.tree     = Gtk.TreeView(model=self.store)
@@ -110,7 +112,8 @@ class EditPower:
             self.valueLabel.hide()
             self.valueWidget.hide()
 
-    def clearEntry(self):
+    def clearEntries(self):
+        print("powers cleared")
         self.store.clear()
 
     def toggleRenderer(self, cellRenderer, path):
@@ -145,11 +148,14 @@ class EditPower:
 
         descriptionBuffer = self.descriptionWidget.get_buffer()
 
-        self.store.append([self.nameWidget.get_text(),
-                           self.globalValue.get_active(),
-                           self.typeWidget.get_active_text(),
-                           value,
-                           descriptionBuffer.get_text(descriptionBuffer.get_start_iter(), descriptionBuffer.get_end_iter(), False)])
+        v = [self.nameWidget.get_text(),
+             self.globalValue.get_active(),
+             self.typeWidget.get_active_text(),
+             value,
+             descriptionBuffer.get_text(descriptionBuffer.get_start_iter(), descriptionBuffer.get_end_iter(), False)]
+
+        self.store.append(v)
+        databaseFunctions.addDatabaseEntry(self.databaseWindow.database, "CAPACITY", v)
 
     def hideWindow(self, window, event):
         window.remove(self.box)

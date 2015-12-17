@@ -1,3 +1,5 @@
+import gi
+gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, GObject, Gdk
 from databaseFunctions import *
 from globalVar import *
@@ -7,12 +9,16 @@ from EditPower import EditPower
 from ArmoryTab import ArmoryTab
 from EditType import EditType
 from CreateWindowDatas import *
+import tempfile
+import os
 
 class DatabaseWindow(Gtk.Window):
     def __init__(self):
         Gtk.Window.__init__(self, title="Database Manager")
+        self.sqlFile     = tempfile.NamedTemporaryFile()
+        self.database    = initDatabase(self.sqlFile.name);
         self.fileManager = FileManager()
-        self.handlePower = EditPower()
+        self.handlePower = EditPower(self)
         self.bestiaryTab = BestiaryTab()
         self.armoryTab   = ArmoryTab(self)
         self.editType    = EditType(self.bestiaryTab, self.armoryTab)
@@ -40,6 +46,21 @@ class DatabaseWindow(Gtk.Window):
         self.add(vbox)
 
         self.show_all()
+
+    def __enter__(self):
+        return self
+
+    def __del__(self):
+        self.finish()
+
+    def __exit__(self, t, value, traceback):
+        self.finish()
+
+    def finish(self):
+        if self.sqlFile != None:
+            self.sqlFile.close()
+        if self.database != None:
+            self.database.close()
 
     def makeFileMenuAction(self):
         fileMenuAction = Gtk.Action("FileMenu", "_File", None, None)
@@ -101,13 +122,17 @@ class DatabaseWindow(Gtk.Window):
         pass
 
     def openFile(self, widget):
-        self.fileManager.openFile(self.bestiaryTab, self.armoryTab, self.handlePower)
+        self.fileManager.openFile(self.bestiaryTab, self.armoryTab, self.handlePower, self)
 
     def saveAs(self, widget):
-        self.fileManager.saveAs(self.bestiaryTab, self.armoryTab, self.handlePower)
+        path = self.fileManager.saveAs(self,self.bestiaryTab, self.armoryTab, self.handlePower)
+        if path != None:
+            if self.sqlFile != None:
+                self.sqlFile.close()
+                self.sqlFile = None
 
     def save(self, widget):
-        self.fileManager.saveFile(self.bestiaryTab, self.armoryTab, self.handlePower)
+        self.fileManager.saveFile(self, self.bestiaryTab, self.armoryTab, self.handlePower)
 
     def addItem(self, widget):
         pass

@@ -153,7 +153,13 @@ class BestiaryTab(Tab):
 
     def addEntry(self, widget):
         Tab.addEntry(self)
-        addEntryInComboBoxText(self.typeWidget)
+        addEntryInComboBoxText(self.typeWidget, BestiaryTab.updateType, self)
+        values = self.getInsertValue()
+        if values:
+            databaseFunctions.addDatabaseEntry(self.databaseWindow.database, "BESTIARY", [str(v) for v in values])
+
+    def updateType(self, t):
+        databaseFunctions.addDatabaseEntry(self.databaseWindow.database, "BESTIARY_TYPE", [t])
 
     def getInsertValue(self):
         descriptionBuffer = self.descriptionWidget.get_buffer()

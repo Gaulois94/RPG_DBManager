@@ -3,6 +3,7 @@ from CreatePower import CreatePower
 from globalVar import *
 from functions import *
 from Tab import Tab
+import databaseFunctions
 
 class ArmoryTab(Tab):
     def __init__(self, databaseWindow):
@@ -27,13 +28,13 @@ class ArmoryTab(Tab):
 
             else:
                 renderer = Gtk.CellRendererText()
+
             renderer.set_property("editable", True)
             renderer.connect("edited", self.editRenderer, value)
             column   = Gtk.TreeViewColumn(value, renderer, text=i)
             column.set_resizable(True)
             column.set_expand(True)
             self.tree.append_column(column)
-
 
     def createHandleManager(self):
         grid      = Gtk.Grid(orientation=Gtk.Orientation.VERTICAL)
@@ -66,8 +67,9 @@ class ArmoryTab(Tab):
         attackSpeedAdjustment = Gtk.Adjustment(0, 0, 1000000, 1, 10, 0)
 
         self.classWidget       = Gtk.ComboBoxText.new()
-        self.classWidget.append_text("Weapon")
-        self.classWidget.append_text("Armour")
+        for c in armoryClass:
+            self.classWidget.append_text(c)
+        self.classWidget.set_active(0)
         self.typeWidget        = Gtk.ComboBoxText.new_with_entry()
         self.nameWidget        = Gtk.Entry()
 
@@ -162,12 +164,25 @@ class ArmoryTab(Tab):
 
         return grid
 
+    def clearEntries(self):
+        super().clearEntries()
+        self.powerDict.clear()
+
     def addEntry(self, widget):
         Tab.addEntry(self)
-        addEntryInComboBoxText(self.typeWidget)
-        self.powerDict[self.idEntry] = CreatePower(self.databaseWindow.handlePower)
+        addEntryInComboBoxText(self.typeWidget, ArmoryTab.updateType, self)
+        self.powerDict[self.idEntry] = CreatePower(self.databaseWindow)
+        values = self.getInsertValue()
+        if values:
+            databaseFunctions.addDatabaseEntry(self.databaseWindow.database, "EQUIPMENT", [str(v) for v in values])
+
+    def updateType(self, t):
+        databaseFunctions.addDatabaseEntry(self.databaseWindow.database, "EQUIPMENT_TYPE", [t])
 
     def getInsertValue(self):
+        if self.nameWidget.get_text() == "":
+            return
+
         descriptionBuffer = self.descriptionWidget.get_buffer()
         return [self.idEntry,\
                 self.classWidget.get_active_text(),\
@@ -228,6 +243,7 @@ class ArmoryTab(Tab):
 
         index = armoryModel.index(value)
         self.store[path][index] = text
+        databaseFunctions.setDatabaseEntry(self.databaseWindow.database, "EQUIPMENT", {value:str(text), "id":str(self.store[path][armoryModel.index("ID")])})
 
     def appendStore(self, l):
         self.store.append(l)
@@ -235,4 +251,4 @@ class ArmoryTab(Tab):
         typeIndex = armoryModel.index("Type")
         addTextInComboBoxText(self.typeWidget, l[typeIndex])
         self.idEntry=l[idIndex]
-        self.powerDict[l[idIndex]] = CreatePower(self.databaseWindow.handlePower)
+        self.powerDict[l[idIndex]] = CreatePower(self.databaseWindow)

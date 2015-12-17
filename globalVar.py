@@ -29,3 +29,6 @@ armoryModel =  ["ID",
                 "Speed",
                 "Attack Speed",
                 "Description"]
+
+armoryClass = ["Weapon",
+               "Armour"]

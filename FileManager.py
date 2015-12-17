@@ -8,8 +8,8 @@ class FileManager:
     def __init__(self, path=None):
         self.path = path
 
-    def saveAs(self, bestiaryTab, armoryTab, handlePower):
-        path = self.selectPath()
+    def saveAs(self, databaseWindow, bestiaryTab, armoryTab, handlePower):
+        path = self.selectPath("Where to save the database ?")
         if path == None:
             return
 
@@ -21,7 +21,9 @@ class FileManager:
 
         messageDialog.destroy()
         if save == Gtk.ResponseType.YES:
-            self.saveFile(database, bestiaryTab, armoryTab, handlePower, path)
+            self.saveFile(databaseWindow, bestiaryTab, armoryTab, handlePower, path)
+
+        return self.path
 
     def selectPath(self, message):
         fileChooserDialog = Gtk.FileChooserDialog(message, databaseWindow, \
@@ -34,26 +36,38 @@ class FileManager:
         fileChooserDialog.destroy()
         return fileName
 
-    def saveFile(self, bestiaryTab, armoryTab, handlePower, path=None):
+    def saveFile(self, windowDatabase, bestiaryTab, armoryTab, handlePower, path=None):
         if path == None:
             if self.path == None:
                 self.path = self.selectPath("Where to save the database ?")
 
-        path = self.path
+                if self.path == None:
+                    return
+                elif osPath.exists(self.path):
+                    os.remove(self.path)
 
-        if path == None:
-            return
-        elif osPath.exists(path):
-            os.remove(path)
+                connection = initDatabase(self.path)
+                recreateDatabase(bestiaryTab, armoryTab, handlePower, connection)
+                windowDatabase.database.close()
+                windowDatabase.database = connection
+            else:
+                saveDatabase(windowDatabase.database)
+        else:
+            if path == self.path:
+                saveDatabase(windowDatabase.database)
+            else:
+                self.path = path
 
-        saveDatabase(bestiaryTab, armoryTab, handlePower, path)
-
-    def openFile(self, bestiaryTab, armoryTab, handlePower):
+    def openFile(self, bestiaryTab, armoryTab, handlePower, windowDatabase):
         path = self.selectPath("Choose a file")
         if path != None:
-            bestiaryTab.clearEntry()
-            armoryTab.clearEntry()
-            handlePower.clearEntry()
+            bestiaryTab.clearEntries()
+            armoryTab.clearEntries()
+            handlePower.clearEntries()
             self.path = path
-            loadDatas(bestiaryTab, armoryTab, handlePower, path)  
+            windowDatabase.database.close()
+            windowDatabase.database = loadDatas(bestiaryTab, armoryTab, handlePower, path)
+            if windowDatabase.sqlFile:
+                windowDatabase.sqlFile.close()
+                windowDatabase.sqlFile = None
             self.path = path
