@@ -1,34 +1,26 @@
 databaseWindow = None
 
-bestiaryModel = ["ID",
-                 "Type",
-                 "Name",
-                 "PV",
-                 "MP",
-                 "AD",
-                 "AP",
-                 "PR",
-                 "MR",
-                 "Size",
-                 "Weight",
-                 "Speed",
-                 "Attack Speed",
-                 "Description"]
+classModel = [("Class Name", str),\
+              ("Name", str)]
 
-armoryModel =  ["ID",
-                "Class",
-                "Type",
-                "Name",
-                "PV",
-                "MP",
-                "AD",
-                "AP",
-                "PR",
-                "MR",
-                "Weight",
-                "Speed",
-                "Attack Speed",
-                "Description"]
+unitModel = [("ID", int),\
+             ("Type Name", str),\
+             ("Name", str),\
+             ("Winged", bool),\
+             ("Level", int),\
+             ("Price", int),\
+             ("Occupation", int),\
+             ("PV", int),\
+             ("MP", int),\
+             ("AD", int),\
+             ("AP", int),\
+             ("PR", int),\
+             ("MR", int),\
+             ("Moving", int),\
+             ("Attack Speed", float),\
+             ("Move Stats", float),\
+             ("Description", str)]
 
-armoryClass = ["Weapon",
-               "Armour"]
+itemModel = ["ID",
+             "Name",
+             "Description"]

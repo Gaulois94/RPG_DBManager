@@ -16,10 +16,11 @@ class Tab(Gtk.Box):
         self.pack_start(self.createHandleManager(), False, False, 0)
 
     def addEntry(self):
-        self.idEntry = self.idEntry+1
         v = self.getInsertValue()
         if v:
             self.store.append(v)
+
+        self.idEntry = self.idEntry+1
 
     def deleteEntry(self, modelStr):
         selection = self.tree.get_selection()
@@ -48,6 +49,8 @@ class Tab(Gtk.Box):
             self.idEntry = self.idEntry+1
             self.store[treeIter][idIndex] = str(self.idEntry)
             treeIter = model.iter_next(treeIter)
+
+        print(resetID)
 
     def replaceEntries(self, modelStr):
         selection = self.tree.get_selection()

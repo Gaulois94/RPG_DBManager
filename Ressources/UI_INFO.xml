@@ -9,7 +9,6 @@
 		</menu>
 		<menu action="EditMenu">
 			<menuitem action="EditPower"/>
-			<menuitem action="EditType"/>
 		</menu>
 	</menubar>
 

@@ -4,10 +4,10 @@ from gi.repository import Gtk, GObject, Gdk
 from databaseFunctions import *
 from globalVar import *
 from FileManager import FileManager
-from BestiaryTab import BestiaryTab
+from UnitTab import UnitTab
+from ClassTab import ClassTab
+from ItemTab import ItemTab
 from EditPower import EditPower
-from ArmoryTab import ArmoryTab
-from EditType import EditType
 from CreateWindowDatas import *
 import tempfile
 import os
@@ -19,9 +19,9 @@ class DatabaseWindow(Gtk.Window):
         self.database    = initDatabase(self.sqlFile.name);
         self.fileManager = FileManager()
         self.handlePower = EditPower(self)
-        self.bestiaryTab = BestiaryTab()
-        self.armoryTab   = ArmoryTab(self)
-        self.editType    = EditType(self.bestiaryTab, self.armoryTab)
+        self.classTab    = ClassTab(self)
+        self.unitTab     = UnitTab(self)
+        self.itemTab     = ItemTab(self)
 
         vbox    = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
 
@@ -36,8 +36,8 @@ class DatabaseWindow(Gtk.Window):
         self.notebook         = Gtk.Notebook()
         self.notebook.set_size_request(600, 300)
 
-        self.notebook.append_page(self.bestiaryTab, Gtk.Label("Bestiary"))
-        self.notebook.append_page(self.armoryTab, Gtk.Label("Armory"))
+        self.notebook.append_page(self.classTab, Gtk.Label("Class"))
+        self.notebook.append_page(self.unitTab, Gtk.Label("Unit"))
 
         vbox.pack_start(self.uiManager.get_widget("/MenuBar"), False, False, 0)
         vbox.pack_start(self.uiManager.get_widget("/ToolBar"), False, False, 0)
@@ -90,10 +90,6 @@ class DatabaseWindow(Gtk.Window):
         self.actionGroup.add_action_with_accel(editPowerAction, "<Ctrl>p")
         editPowerAction.connect("activate", self.editPower)
 
-        editTypeAction  = Gtk.Action("EditType", "Edit _Type", None, None)
-        self.actionGroup.add_action_with_accel(editTypeAction, "<Ctrl>t")
-        editTypeAction.connect("activate", self.editList)
-
     def makeToolbarAction(self):
         toolsMenuAction = Gtk.Action("ToolsMenu", "_Tools", None, None)
         self.actionGroup.add_action(toolsMenuAction)
@@ -122,17 +118,17 @@ class DatabaseWindow(Gtk.Window):
         pass
 
     def openFile(self, widget):
-        self.fileManager.openFile(self.bestiaryTab, self.armoryTab, self.handlePower, self)
+        self.fileManager.openFile(self.unitTab, self.handlePower, self)
 
     def saveAs(self, widget):
-        path = self.fileManager.saveAs(self,self.bestiaryTab, self.armoryTab, self.handlePower)
+        path = self.fileManager.saveAs(self,self.unitTab, self.handlePower)
         if path != None:
             if self.sqlFile != None:
                 self.sqlFile.close()
                 self.sqlFile = None
 
     def save(self, widget):
-        self.fileManager.saveFile(self, self.bestiaryTab, self.armoryTab, self.handlePower)
+        self.fileManager.saveFile(self, self.unitTab, self.handlePower)
 
     def addItem(self, widget):
         pass
@@ -145,6 +141,3 @@ class DatabaseWindow(Gtk.Window):
 
     def editPower(self, widget):
         self.handlePower.editList()
-
-    def editList(self, widget):
-        self.editType.editList()

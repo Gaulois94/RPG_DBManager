@@ -8,20 +8,21 @@ class FileManager:
     def __init__(self, path=None):
         self.path = path
 
-    def saveAs(self, databaseWindow, bestiaryTab, armoryTab, handlePower):
+    def saveAs(self, databaseWindow, unitTab, handlePower):
         path = self.selectPath("Where to save the database ?")
         if path == None:
             return
 
         save = True
         if osPath.exists(path):
-            messageDialog = Gtk.MessageDialog(type=Gtk.MessageType.QUESTION, buttons=Gtk.ButtonsType.YES_NO)
-            messageDialog.set_markup("The file already exists. Are you sur you want to save ?")
-            save = messageDialog.run()
+            messageDialog = Gtk.MessageDialog(databaseWindow, Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.QUESTION, Gtk.ButtonsType.YES_NO, "The file already exists. Are you sure you want to save ?")
 
-        messageDialog.destroy()
-        if save == Gtk.ResponseType.YES:
-            self.saveFile(databaseWindow, bestiaryTab, armoryTab, handlePower, path)
+            save = messageDialog.run()
+            messageDialog.destroy()
+
+        if save == Gtk.ResponseType.YES or save == True:
+            os.remove(path)
+            self.saveFile(databaseWindow, unitTab, handlePower, path)
 
         return self.path
 
@@ -36,7 +37,7 @@ class FileManager:
         fileChooserDialog.destroy()
         return fileName
 
-    def saveFile(self, windowDatabase, bestiaryTab, armoryTab, handlePower, path=None):
+    def saveFile(self, windowDatabase, unitTab, handlePower, path=None):
         if path == None:
             if self.path == None:
                 self.path = self.selectPath("Where to save the database ?")
@@ -47,7 +48,7 @@ class FileManager:
                     os.remove(self.path)
 
                 connection = initDatabase(self.path)
-                recreateDatabase(bestiaryTab, armoryTab, handlePower, connection)
+                recreateDatabase(windowDatabase.classTab, unitTab, handlePower, connection)
                 windowDatabase.database.close()
                 windowDatabase.database = connection
             else:
@@ -57,16 +58,19 @@ class FileManager:
                 saveDatabase(windowDatabase.database)
             else:
                 self.path = path
+                connection = initDatabase(self.path)
+                recreateDatabase(windowDatabase.classTab, unitTab, handlePower, connection)
+                windowDatabase.database.close()
+                windowDatabase.database = connection
 
-    def openFile(self, bestiaryTab, armoryTab, handlePower, windowDatabase):
+    def openFile(self, unitTab, handlePower, windowDatabase):
         path = self.selectPath("Choose a file")
         if path != None:
-            bestiaryTab.clearEntries()
-            armoryTab.clearEntries()
+            unitTab.clearEntries()
             handlePower.clearEntries()
             self.path = path
             windowDatabase.database.close()
-            windowDatabase.database = loadDatas(bestiaryTab, armoryTab, handlePower, path)
+            windowDatabase.database = loadDatas(windowDatabase.classTab, unitTab, handlePower, path)
             if windowDatabase.sqlFile:
                 windowDatabase.sqlFile.close()
                 windowDatabase.sqlFile = None

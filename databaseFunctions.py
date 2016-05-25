@@ -1,19 +1,26 @@
 from io import StringIO
-from ArmoryTab import ArmoryTab
-from BestiaryTab import BestiaryTab
+from UnitTab import UnitTab
 from globalVar import *
 from functions import *
 
 import sqlite3 as sql
 
 sqlInitDB = """
+               CREATE TABLE Class(name VARCHAR(32) PRIMARY KEY);
+
+               CREATE TABLE Type(className VARCHAR(32),
+                                 name VARCHAR(32) PRIMARY KEY,
+                                 FOREIGN KEY(className) REFERENCES Class(name));
+
                CREATE TABLE ValueType(name VARCHAR(32) PRIMARY KEY);
 
-               CREATE TABLE BestiaryType(name VARCHAR(32) PRIMARY KEY);
-
-               CREATE TABLE Bestiary(id INTEGER PRIMARY KEY AUTOINCREMENT, 
-                                      type        VARCHAR(32),
-                                      name        VARCHAR(32) NOT NULL,
+               CREATE TABLE Unit(id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                                      typeName   VARCHAR(32),
+                                      name        VARCHAR(32),
+                                      winged      BOOL,
+                                      level       INTEGER,
+                                      price       INTEGER,
+                                      occupation  INTEGER,
                                       modelPath   TEXT,
                                       pv          INTEGER,
                                       mp          INTEGER,
@@ -21,12 +28,11 @@ sqlInitDB = """
                                       ap          INTEGER,
                                       pr          INTEGER,
                                       mr          INTEGER,
-                                      size        FLOAT,
-                                      weight      FLOAT,
-                                      speed       FLOAT,
+                                      moving      INTEGER,
                                       attackSpeed FLOAT,
+                                      moveStats   FLOAT,
                                       description TEXT,
-                                      FOREIGN KEY(type) REFERENCES BestiaryType(name));
+                                      FOREIGN KEY(typeName) REFERENCES Type(name));
 
                CREATE TABLE Capacity(name VARCHAR(32) PRIMARY KEY,
                                      isGlobal TINYINT NOT NULL,
@@ -35,167 +41,108 @@ sqlInitDB = """
                                      description TEXT,
                                      FOREIGN KEY(type) REFERENCES ValueType(name));
 
-               CREATE TABLE EquipmentClass(name VARCHAR(32) PRIMARY KEY);
-                                   
+               CREATE TABLE Capacity_Unit(idUnit INTEGER,
+                                          capacityName VARCHAR(32),
+                                          FOREIGN KEY(idUnit) REFERENCES Unit(id),
+                                          FOREIGN KEY(capacityName) REFERENCES Capacity(name));
+
                CREATE TABLE ItemType(name VARCHAR(32) PRIMARY KEY);
             
                CREATE TABLE Item(id INTEGER PRIMARY KEY,
                                   type VARCHAR(32) NOT NULL,
                                   FOREIGN KEY(type) REFERENCES ItemType(name));
 
-               CREATE TABLE EquipmentType(name VARCHAR(32) PRIMARY KEY);
-
-               CREATE TABLE Equipment(id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                                      class       VARCHAR(32) NOT NULL,
-                                      type        VARCHAR(32),
-                                      name        VARCHAR(32) NOT NULL,
-                                      modelPath   TEXT,
-                                      pv          INTEGER,
-                                      mp          INTEGER,
-                                      ad          INTEGER,
-                                      ap          INTEGER,
-                                      pr          INTEGER,
-                                      mr          INTEGER,
-                                      weight      FLOAT,
-                                      speed       FLOAT,
-                                      attackSpeed FLOAT,
-                                      description TEXT,
-                                      FOREIGN KEY(type) REFERENCES EquipmentType(name),
-                                      FOREIGN KEY(class) REFERENCES EquipmentClass(name),
-                                      FOREIGN KEY(id)   REFERENCES Item(id)
-                                      ON DELETE CASCADE);
-
-               CREATE TABLE EquipmentCapacity(id     INTEGER,
-                                              type   VARCHAR(32),
-                                              value  BLOB,
-                                              FOREIGN KEY(id) REFERENCES Equipment(id)
-                                              ON DELETE CASCADE,
-                                              FOREIGN KEY(type) REFERENCES Capacity(name)
-                                              ON DELETE CASCADE);
-
                INSERT INTO ValueType(name)
-               VALUES ("Float"), ("Int"), ("String"), ("Bool");
-
-               INSERT INTO ItemType(name)
-               VALUES ("Equipment"), ("Utilitary");"""
+               VALUES ("Float"), ("Int"), ("String"), ("Bool");"""
                                    
 def initDatabase(path, reinit=True):
     connection = sql.connect(path)
     if reinit:
-        cursor     = connection.cursor()
+        cursor = connection.cursor()
         script = sqlInitDB
-        script = script + """INSERT INTO EquipmentClass(name)
-                             VALUES """
-
-        for c in armoryClass:
-            script = script + "(\"" + c + "\"), "
-
-        if len(armoryClass) > 0:
-            script = script[0:-2] + ";"
         connection.cursor().executescript(script)
 
     return connection
 
-def recreateDatabase(bestiaryTab, armoryTab, handlePower, connection):
+def recreateDatabase(classTab, unitTab, handlePower, connection):
+    print("recreate class")
+    saveClass(classTab, connection)
+    print("recreate type")
+    saveType(classTab, connection)
     saveCapacity(handlePower, connection)
-    saveBestiaryDatas(bestiaryTab, connection)
-    saveEquipmentData(armoryTab, connection)
-    saveEquipmentCapacityData(armoryTab, connection)
+    saveUnitDatas(unitTab, connection)
 
     connection.commit()
 
 def saveDatabase(connection):
     connection.commit()
 
-def saveBestiaryDatas(bestiaryTab, connection):
-    script = """INSERT INTO BestiaryType(name)
-                VALUES """
-
-    typeModel = bestiaryTab.typeWidget.get_model()
-    typeIter  = typeModel.get_iter_first()
+def saveClass(classTab, connection):
+    script = "INSERT INTO Class(name) VALUES "
+    listClass = []
+    classStore = classTab.store
+    storeIter = classTab.store.get_iter_first()
     miniScript = None
-    
-    while typeIter != None:
-        miniScript = "(\"" + typeModel[typeIter][0] + "\"), "
-        script = script + miniScript
-        typeIter = typeModel.iter_next(typeIter)
 
-    if miniScript != None:
-        script = script[0:-2] + ";"
-        connection.cursor().executescript(script)
-
-    script = "INSERT INTO Bestiary(" + str.join(', ', [x.replace(" ", "") for x in bestiaryModel]) +")VALUES "
-
-    bestiaryStore = bestiaryTab.store
-    storeIter     = bestiaryTab.store.get_iter_first()
-    miniScript = None
     while storeIter != None:
+        if classStore[storeIter][0] not in listClass:
+            listClass.append(classStore[storeIter][0])
+        else:
+            storeIter = classStore.iter_next(storeIter)
+            continue
+
         miniScript = "("
-        for i in range(len(bestiaryModel)):
-            miniScript = miniScript + "\"" + str(bestiaryStore[storeIter][i]) + "\", "
-        script = script + miniScript[0:-2] + "), "
-        storeIter = bestiaryStore.iter_next(storeIter)
+        miniScript = miniScript + "\"" + str(classStore[storeIter][0]) + "\""
+        script = script + miniScript + "), "
+        storeIter = classStore.iter_next(storeIter)
 
     if miniScript != None:
         script = script[0:-2] + ";"
         script = script.replace("\"\"", "NULL")
+        print(script)
         connection.cursor().executescript(script)
 
-def saveEquipmentData(armoryTab, connection):
-    model       = armoryTab.store
-    treeIter    = armoryTab.store.get_iter_first()
+def saveType(classTab, connection):
+    classStore = classTab.store
+    storeIter = classTab.store.get_iter_first()
+    childIter = None
 
-    script = """INSERT INTO EquipmentType(name)
-                VALUES """
-
-    typeModel = armoryTab.typeWidget.get_model()
-    typeIter  = typeModel.get_iter_first()
-    miniScript = None
-
-    while typeIter != None:
-        miniScript = "(\""+typeModel[typeIter][0]+"\"), "
-        script     = script + miniScript
-        typeIter   = typeModel.iter_next(typeIter)
-
-    if miniScript != None:
-        script = script[0:-2] + ";"
-        script = script.replace("\"\"", "NULL")
-        connection.cursor().executescript(script)
-
-    script = "INSERT INTO Equipment(" + str.join(', ', [x.replace(" ", "") for x in armoryModel]) + ") VALUES "
-
-    model = armoryTab.store
-    storeIter = model.get_iter_first()
-    idIndex = armoryModel.index("ID")
+    script = "INSERT INTO Type(" + str.join(', ', [x[0].replace(" ", "") for x in classModel]) +") VALUES "
 
     miniScript = None
+
     while storeIter != None:
-        connection.cursor().executescript("INSERT INTO Item(id, type) VALUES ("+str(model[storeIter][idIndex])+", \"Equipment\");")
-        miniScript = "("
-        for i in range(len(armoryModel)):
-            miniScript = miniScript + "\"" + str(model[storeIter][i]) + "\", "
-        script = script + miniScript[0:-2] + "), "
-        storeIter = model.iter_next(storeIter)
+        childIter = classStore.iter_children(storeIter)
 
-    if miniScript != None:
-        script = script[0:-2]
-        script = script.replace("\"\"", "NULL")
-        connection.cursor().executescript(script)
-
-def saveEquipmentCapacityData(armoryTab, connection):
-    script = "INSERT INTO EquipmentCapacity(id, type, value) VALUES "
-    miniScript = None
-    for key, createPower in armoryTab.powerDict.items():
-        iterPower = createPower.store.get_iter_first()
-        while iterPower != None:
-            miniScript = "(" + str(key) + ', '
-            for i in range(2):
-                miniScript = miniScript + "\"" + str(createPower.store[iterPower][i]) + "\", "
+        while childIter != None:
+            miniScript = "("
+            miniScript = miniScript + "\"" + classStore[storeIter][0] + '\", \"' + classStore[childIter][0] + "\", "
             script = script + miniScript[0:-2] + "), "
-            iterPower = createPower.store.iter_next(iterPower)
+            childIter = classStore.iter_next(childIter)
+        storeIter = classStore.iter_next(storeIter)
 
     if miniScript != None:
         script = script[0:-2] + ";"
+        script = script.replace("\"\"", "NULL")
+        print(script)
+        connection.cursor().executescript(script)
+
+def saveUnitDatas(unitTab, connection):
+    script = "INSERT INTO Unit(" + str.join(', ', [x[0].replace(" ", "") for x in unitModel]) +")VALUES "
+
+    unitStore = unitTab.store
+    storeIter  = unitTab.store.get_iter_first()
+    miniScript = None
+    while storeIter != None:
+        miniScript = "("
+        for i in range(len(unitModel)):
+            miniScript = miniScript + "\"" + str(unitStore[storeIter][i]) + "\", "
+        script = script + miniScript[0:-2] + "), "
+        storeIter = unitStore.iter_next(storeIter)
+
+    if miniScript != None:
+        script = script[0:-2] + ";"
+        script = script.replace("\"\"", "NULL")
         connection.cursor().executescript(script)
 
 def saveCapacity(handlePower, connection):
@@ -230,38 +177,32 @@ def saveCapacity(handlePower, connection):
         script = script.replace("\"\"", "NULL")
         connection.cursor().executescript(script)
 
-def loadDatas(bestiaryTab, armoryTab, handlePower, path):
+def loadDatas(classTab, unitTab, handlePower, path):
     connection = sql.connect(path)
+    loadClass(classTab, connection)
     loadCapacity(handlePower, connection)
-    loadBestiary(bestiaryTab, connection)
-    loadEquipment(armoryTab, connection)
-    loadEquipmentCapacity(armoryTab, connection)
+    loadUnit(unitTab, connection)
 
-    cursor = connection.cursor().execute("SELECT * FROM SQLITE_SEQUENCE WHERE name = \"Bestiary\" OR name = \"Equipment\"");
+    cursor = connection.cursor().execute("SELECT * FROM SQLITE_SEQUENCE WHERE name = \'Unit\'");
     for row in cursor:
-        if row[0] == "Bestiary":
-            bestiaryTab.entryID = row[1]
-        elif row[0] == "Equipment":
-            armoryTab.entryID = row[1]
+        if row[0] == "Unit":
+            unitTab.idEntry = int(row[1]) + 1
 
     return connection
 
-def loadBestiary(bestiaryTab, connection):
-    cursor  = connection.execute("SELECT * FROM Bestiary")
+def loadClass(classTab, connection):
+    cursor = connection.execute("SELECT * FROM Type")
     for row in cursor:
-        #!= 3 for the model statement
-        l = [row[x] for x in range(len(row)) if x != 3]
-        replaceNone(l)
-        typeIndex = bestiaryModel.index("Type")
-        bestiaryTab.store.append(l)
-        addTextInComboBoxText(bestiaryTab.typeWidget, row[typeIndex] if row[typeIndex] != None else "")
+        classTab.loadEntry(row, False)
 
-def loadEquipment(armoryTab, connection):
-    cursor = connection.execute("SELECT * FROM Equipment")
+def loadUnit(unitTab, connection):
+    cursor  = connection.execute("SELECT * FROM Unit")
+    modelIndex = 7
     for row in cursor:
-        l = [row[x] for x in range(len(row)) if x != 4]
+        l = [row[x] for x in range(len(row)) if x != modelIndex]
         replaceNone(l)
-        armoryTab.appendStore(l)
+        typeIndex = unitModel.index(("Type Name", str))
+        unitTab.store.append(l)
 
 def loadCapacity(handlePower, connection):
     cursor = connection.execute("SELECT * FROM Capacity")
@@ -270,52 +211,48 @@ def loadCapacity(handlePower, connection):
         replaceNone(l)
         handlePower.store.append(l)
 
-def loadEquipmentCapacity(armoryTab, connection):
-    cursor = connection.execute("SELECT * FROM EquipmentCapacity")
-    for row in cursor:
-        armoryTab.powerDict[row[0]].store.append([str(row[x]) for x in range(1, len(row))])
 
-def setDatabaseEntry(connection, t, kwargs):
+def setDatabaseEntry(connection, t, key, entry, value):
     script = None
 
-    if t == "BESTIARY_TYPE":
-        script = """UPDATE BestiaryType
-                    SET """ + str.join(', ', [n + " = \'" + v + "\'" for (n, v) in kwargs.items() if n != "name"]) +\
-                   "WHERE name=\'" + kwargs["name"] + "\';"
-    elif t == "BESTIARY":
-        script = """UPDATE Bestiary
-                    SET """ + str.join(', ', [n + " = \'" + v + "\'" for (n, v) in kwargs.items() if n != "id"]) +\
-                   "WHERE id=\'" + kwargs["id"] + "\';" 
+    if t == "UNIT":
+        script = """UPDATE Unit
+                    SET \'""" + entry.replace(" ", "") + "\' = " + "\"" + str(value) + "\" "\
+                   "WHERE id=\'" + key + "\';" 
 
     elif t == "CAPACITY":
         script = """UPDATE Capacity
-                    SET """ + str.join(', ', [n + " = \'" + v + "\'" for (n, v) in kwargs.items() if n != "name"]) +\
-                   "WHERE name=\'" + kwargs["name"] + "\';" 
-
-    elif t == "EQUIPMENT_CLASS":
-        script = """UPDATE EquipmentClass
-                    SET """ + str.join(', ', [n + " = \'" + v + "\'" for (n, v) in kwargs.items() if n != "name"]) +\
-                   "WHERE name=\'" + kwargs["name"] + "\';" 
+                    SET """ + entry.replace(" ", "") + " = " + str(value) +\
+                   "WHERE name=\'" + key + "\';" 
 
     elif t == "ITEM":
         script = """UPDATE Item
-                    SET """ + str.join(', ', [n + " = \'" + v + "\'" for (n, v) in kwargs.items() if n != "id"]) +\
-                   "WHERE id=\'" + kwargs["id"] + "\';" 
+                    SET """ + entry.replace(" ", "") + " = " + str(value) +\
+                   "WHERE id=\'" + key + "\';" 
 
-    elif t == "EQUIPMENT_TYPE":
-        script = """UPDATE EquipmentType
-                    SET """ + str.join(', ', [n + " = \'" + v + "\'" for (n, v) in kwargs.items() if n != "name"]) +\
-                   "WHERE name=\'" + kwargs["name"] + "\';" 
+    if script != None:
+        print(script)
+        script = script.replace("\'\'", "NULL")
+        connection.cursor().executescript(script)
 
-    elif t == "EQUIPMENT":
-        script = """UPDATE Equipment
-                    SET """ + str.join(', ', [n + " = \'" + v + "\'" for (n, v) in kwargs.items() if n != "id"]) +\
-                   "WHERE id=\'" + kwargs["id"] + "\';" 
 
-    elif t == "EQUIPMENT_CAPACITY":
-        script = """UPDATE EquipmentCapacity
-                    SET """ + str.join(', ', [n + " = \'" + v + "\'" for (n, v) in kwargs.items() if n != "id"]) +\
-                   "WHERE id=\'" + kwargs["id"] + "\';" 
+def setDatabaseEntryKwargs(connection, t, kwargs):
+    script = None
+
+    if t == "UNIT":
+        script = """UPDATE Unit
+                    SET """ + str.join(', ', ["\"" + n.replace(" ", "") + "\" = \'" + v + "\'" for (n, v) in kwargs.items() if n != "id"]) +\
+                   " WHERE id=\'" + kwargs["id"] + "\';" 
+
+    elif t == "CAPACITY":
+        script = """UPDATE Capacity
+                    SET """ + str.join(', ', [n.replace(" ", "") + " = \'" + v + "\'" for (n, v) in kwargs.items() if n != "name"]) +\
+                   " WHERE name=\'" + kwargs["name"] + "\';" 
+
+    elif t == "ITEM":
+        script = """UPDATE Item
+                    SET """ + str.join(', ', [n.replace(" ", "") + " = \'" + v + "\'" for (n, v) in kwargs.items() if n != "id"]) +\
+                   " WHERE id=\'" + kwargs["id"] + "\';" 
 
     if script != None:
         print(script)
@@ -325,12 +262,8 @@ def setDatabaseEntry(connection, t, kwargs):
 def addDatabaseEntry(connection, t, values):
     script = None
 
-    if t == "BESTIARY_TYPE":
-        script = """INSERT INTO BestiaryType(name)
-                    VALUES (\'""" + values[0] + "\');"
-
-    elif t == "BESTIARY":
-        script = """INSERT INTO Bestiary(id, type, name, pv, mp, ad, ap, pr, mr, size, weight, speed, attackSpeed, description) VALUES (\'""" + str.join('\', \'', [x.replace(" ", "") for x in values]) + "\');"
+    if t == "UNIT":
+        script = """INSERT INTO Unit(id, typeName, name, winged, level, price, occupation, pv, mp, ad, ap, pr, mr, moving, attackSpeed, moveStats, description) VALUES (""" + str.join(', ', ["\"" + x + "\"" for x in values]) + ");"
 
     elif t == "CAPACITY":
         script = """INSERT INTO Capacity(name, isGlobal, type, value, description)
@@ -346,44 +279,25 @@ def addDatabaseEntry(connection, t, values):
             script = script + str(int(values[3] != 0))
         script = script + "\', \'" + values[4] + "\');"
 
+    elif t == "CLASS":
+        script = """INSERT INTO Class(name) VALUES (\'""" + str(values[0]) + "\');"
+
+    elif t == "TYPE":
+        script = """INSERT INTO Type(className, name) VALUES (\'""" + str.join('\', \'', [x for x in values]) + "\');"
+
     elif t == "ITEM":
         script = "INSERT INTO Item(id, type) VALUES (\'"+values[0]+"\', \'Equipment\');"
 
-    elif t == "EQUIPMENT_CLASS":
-        script = """INSERT INTO EquipmentClass(name)
-                    VALUES (\'""" + values[0] + "\');"
-
-    elif t == "EQUIPMENT_TYPE":
-        script = """INSERT INTO EquipmentType(name)
-                    VALUES (\'""" + values[0] + "\');"
-
-    elif t == "EQUIPMENT":
-        script = """INSERT INTO Equipment(id, class, type, name, pv, mp, ad, ap, pr, mr, weight, speed, attackSpeed, description)
-                   VALUES (\'""" + str.join('\', \'', [x.replace(" ", "") for x in values]) + "\');"
-
-    elif t == "EQUIPMENT_CAPACITY":
-        script = "INSERT INTO EquipmentCapacity(id, type, value) VALUES (\'" + str.join('\', \'', [x.replace(" ", "") for x in values]) + "\');"
-
     if script != None:
         script = script.replace("\'\'", "NULL")
-        connection.cursor().executescript(script)
         print(script)
+        connection.cursor().executescript(script)
 
 def deleteDatabaseEntry(connection, t, key):
     script = None
-    if t == "BESTIARY_TYPE":
-        script = "DELETE FROM BestiaryType      WHERE name = \'" + key + "\';"
-    elif t == "BESTIARY":
-        script = "DELETE FROM Bestiary          WHERE id = \'" + key + "\';"
+    if t == "UNIT":
+        script = "DELETE FROM Unit          WHERE id = \'" + key + "\';"
     elif t == "CAPACITY":
         script = "DELETE FROM Capacity          WHERE name = \'" + key + "\';"
-    elif t == "EQUIPMENT_CLASS":
-        script = "DELETE FROM EquipmentClass    WHERE name = \'" + key + "\';"
     elif t == "ITEM":
         script = "DELETE FROM Item              WHERE id = \'" + key + "\';"
-    elif t == "EQUIPMENT_TYPE":
-        script = "DELETE FROM EquipmentType     WHERE name = \'" + key + "\';"
-    elif t == "EQUIPMENT":
-        script = "DELETE FROM Equipment         WHERE id = \'" + key + "\';"
-    elif t == "EQUIPMENT_CAPACITY":
-        script = "DELETE FROM EquipmentCapacity WHERE id = \'" + key + "\';"
