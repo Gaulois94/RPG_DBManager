@@ -34,6 +34,11 @@ sqlInitDB = """
                                       description TEXT,
                                       FOREIGN KEY(typeName) REFERENCES Type(name));
 
+               CREATE TABLE UnitTree(parent INTEGER,
+                                     child  INTEGER,
+                                     FOREIGN KEY(parent) REFERENCES Unit(id),
+                                     FOREIGN KEY(child)  REFERENCES Unit(id));
+
                CREATE TABLE Capacity(name VARCHAR(32) PRIMARY KEY,
                                      isGlobal TINYINT NOT NULL,
                                      type  VARCHAR(32),
@@ -198,11 +203,31 @@ def loadClass(classTab, connection):
 def loadUnit(unitTab, connection):
     cursor  = connection.execute("SELECT * FROM Unit")
     modelIndex = 7
+
+    treeCursor = connection.execute("SELECT * FROM UnitTree")
+    unitDict = dict()
+    unitTreeList = list()
+
     for row in cursor:
         l = [row[x] for x in range(len(row)) if x != modelIndex]
         replaceNone(l)
-        typeIndex = unitModel.index(("Type Name", str))
-        unitTab.store.append(l)
+        #The None is the TreeIter of this row. It is needed for the append function (parent of the TreeStore)
+        l.append(None)
+        unitDict[row[0]] = l
+
+    for treeRow in treeCursor:
+        unitTreeList.append(list(treeRow))
+
+
+    for row in unitDict.values():
+        parent = None
+        for treeRow in unitTreeList:
+            if row[0] == treeRow[1]:
+                print(unitDict[treeRow[0]])
+                parent = unitDict[treeRow[0]][-1]
+                break;
+
+        row[-1] = unitTab.store.append(parent, row[0:-1])
 
 def loadCapacity(handlePower, connection):
     cursor = connection.execute("SELECT * FROM Capacity")
@@ -287,6 +312,9 @@ def addDatabaseEntry(connection, t, values):
 
     elif t == "ITEM":
         script = "INSERT INTO Item(id, type) VALUES (\'"+values[0]+"\', \'Equipment\');"
+
+    elif t == "UnitTree":
+        script = "INSERT INTO UnitTree(parent, child) VALUES (""" + str.join(', ', ["\"" + x + "\"" for x in values]) + ");"
 
     if script != None:
         script = script.replace("\'\'", "NULL")

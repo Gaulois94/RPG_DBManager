@@ -28,13 +28,10 @@ class Tab(Gtk.Box):
             return
 
         model, paths     = selection.get_selected_rows()
-        lenPath   = len(paths)
 
         for path in paths[::-1]:
             i = model.get_iter(path)
             model.remove(i)
-
-       # self.resetID(modelStr)
 
     def clearEntries(self):
         self.store.clear()

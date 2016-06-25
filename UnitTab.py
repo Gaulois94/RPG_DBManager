@@ -1,14 +1,14 @@
 from gi.repository import Gtk
 from globalVar import *
 from functions import *
-from Tab import Tab
+from TreeTab import TreeTab
 import databaseFunctions
 
-class UnitTab(Tab):
+class UnitTab(TreeTab):
     def __init__(self, window):
         self.databaseWindow = window
-        store     = Gtk.ListStore(*[x[1] for x  in unitModel])
-        Tab.__init__(self, store)
+        store     = Gtk.TreeStore(*[x[1] for x  in unitModel])
+        TreeTab.__init__(self, store)
 
         for i, value in enumerate(unitModel):
             renderer = None
@@ -197,7 +197,11 @@ class UnitTab(Tab):
           
         if values:
             databaseFunctions.addDatabaseEntry(self.databaseWindow.database, "UNIT", [str(v) for v in values])
-        Tab.addEntry(self)
+            parent = self.getParent()
+            if parent != None:
+                print("parent id" + str(model[parent][0]))
+                databaseFunctions.addDatabaseEntry(self.databaseWindow.database, "UnitTree", [str(model[parent][0]), str(values[0])])
+        TreeTab.addEntry(self)
 
     def getInsertValue(self):
         descriptionBuffer = self.descriptionWidget.get_buffer()
@@ -218,6 +222,17 @@ class UnitTab(Tab):
                 descriptionBuffer.get_text(descriptionBuffer.get_start_iter(), descriptionBuffer.get_end_iter(), False)\
                ]
 
+    def getParent(self):
+        selection = self.tree.get_selection()
+        if selection == None:
+            return None
+
+        model, paths = selection.get_selected_rows()
+        if len(paths) == 0:
+            return None
+
+        return model.get_iter(paths[-1])
+
     def resetEntries(self, widget):
         self.nameWidget.set_text("")
         self.levelWidget.set_value(0)
@@ -235,10 +250,10 @@ class UnitTab(Tab):
         self.attackSpeedWidget.set_value(0)
 
     def deleteEntry(self):
-        Tab.deleteEntry(self, unitModel)
+        TreeTab.deleteEntry(self, unitModel)
 
     def replaceEntries(self, widget):
-        Tab.replaceEntries(self, unitModel)
+        TreeTab.replaceEntries(self, unitModel)
 
     def toggleRenderer(self, renderer, path, index):
         self.store[path][index] = not self.store[path][index]
