@@ -28,3 +28,5 @@ itemModel = ["ID",
 animModel = [("Unit Name", str),\
              ("Animation Name", str),\
              ("Type", str)]
+
+staticModel = ["orientation", "x", "y", "posX", "posY", "padX", "padY", "n", "nX"]

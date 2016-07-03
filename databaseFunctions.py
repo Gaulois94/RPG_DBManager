@@ -2,6 +2,7 @@ from io import StringIO
 from UnitTab import UnitTab
 from globalVar import *
 from functions import *
+from AnimTypeModel import *
 
 import sqlite3 as sql
 
@@ -46,6 +47,7 @@ sqlInitDB = """
                                      FOREIGN KEY(unitID) REFERENCES Unit(id));
 
                CREATE TABLE UnitStaticAnim(unitAnimID INTEGER,
+                                           orientation VARCHAR(32),
                                            x          INTEGER,
                                            y          INTEGER,
                                            sizeY      INTEGER,
@@ -95,9 +97,7 @@ def initDatabase(path, reinit=True):
     return connection
 
 def recreateDatabase(classTab, unitTab, handlePower, connection):
-    print("recreate class")
     saveClass(classTab, connection)
-    print("recreate type")
     saveType(classTab, connection)
     saveCapacity(handlePower, connection)
     saveUnitDatas(unitTab, connection)
@@ -207,16 +207,19 @@ def saveCapacity(handlePower, connection):
         script = script.replace("\"\"", "NULL")
         connection.cursor().executescript(script)
 
-def loadDatas(classTab, unitTab, handlePower, path):
+def loadDatas(classTab, unitTab, animTab, handlePower, path):
     connection = sql.connect(path)
     loadClass(classTab, connection)
     loadCapacity(handlePower, connection)
     loadUnit(unitTab, connection)
+    loadAnim(animTab, connection)
 
-    cursor = connection.cursor().execute("SELECT * FROM SQLITE_SEQUENCE WHERE name = \'Unit\'");
+    cursor = connection.cursor().execute("SELECT * FROM SQLITE_SEQUENCE");
     for row in cursor:
         if row[0] == "Unit":
-            unitTab.idEntry = int(row[1]) + 1
+            unitTab.idEntry = int(row[1])
+        elif row[0] == "UnitAnim":
+            animTab.idEntry = int(row[1])
 
     return connection
 
@@ -243,16 +246,15 @@ def loadUnit(unitTab, connection):
     for treeRow in treeCursor:
         unitTreeList.append(list(treeRow))
 
-
     for row in unitDict.values():
         parent = None
         for treeRow in unitTreeList:
             if row[0] == treeRow[1]:
-                print(unitDict[treeRow[0]])
                 parent = unitDict[treeRow[0]][-1]
                 break;
 
         row[-1] = unitTab.store.append(parent, row[0:-1])
+        unitStore.append([row[2]])
 
 def loadCapacity(handlePower, connection):
     cursor = connection.execute("SELECT * FROM Capacity")
@@ -261,13 +263,21 @@ def loadCapacity(handlePower, connection):
         replaceNone(l)
         handlePower.store.append(l)
 
+def loadAnim(animationTab, connection):
+    cursor = connection.execute("SELECT * FROM UnitAnim")
+    parents = dict()
+    for row in cursor:
+        unitName = getUnitName(connection, row[1])
+        if not unitName in parents:
+            parents[unitName] = animationTab.store.append(None, [unitName, "", ""])
+        animationTab.store.append(parents[unitName], [unitName, row[2], row[3]])
 
 def setDatabaseEntry(connection, t, key, entry, value):
     script = None
 
     if t == "UNIT":
         script = """UPDATE Unit
-                    SET \'""" + entry.replace(" ", "") + "\' = " + "\"" + str(value) + "\" "\
+                    SET \'""" + entry.replace(" ", "") + "\' = " + "\"" + str(value) + "\" " +\
                    "WHERE id=\'" + key + "\';" 
 
     elif t == "CAPACITY":
@@ -284,6 +294,13 @@ def setDatabaseEntry(connection, t, key, entry, value):
         print(script)
         script = script.replace("\'\'", "NULL")
         connection.cursor().executescript(script)
+
+def setStaticAnimEntry(connection, animID, orientation, entry, value):
+    script = """UPDATE UnitStaticAnim
+                SET \'""" + entry.replace(" ", "") + "\' = \"" + str(value) + "\" " +\
+                "WHERE unitAnimID = " + str(animID) + " AND orientation = \"" + orientation + "\";"
+    print(script)
+    connection.cursor().executescript(script)
 
 
 def setDatabaseEntryKwargs(connection, t, kwargs):
@@ -341,6 +358,12 @@ def addDatabaseEntry(connection, t, values):
     elif t == "UnitTree":
         script = "INSERT INTO UnitTree(parent, child) VALUES (""" + str.join(', ', ["\"" + x + "\"" for x in values]) + ");"
 
+    elif t == "UnitAnim":
+        script = "INSERT INTO UnitAnim(id, unitID, name, type) VALUES (" + str.join(', ', ["\"" + x + "\"" for x in values]) + ");"
+
+    elif t == "UnitStaticAnim" or t == "UnitDynamicAnim":
+        script = "INSERT INTO " + t + " VALUES (" + str.join(', ', ["\"" + x + "\"" for x in values]) + ");"
+
     if script != None:
         script = script.replace("\'\'", "NULL")
         print(script)
@@ -354,3 +377,27 @@ def deleteDatabaseEntry(connection, t, key):
         script = "DELETE FROM Capacity          WHERE name = \'" + key + "\';"
     elif t == "ITEM":
         script = "DELETE FROM Item              WHERE id = \'" + key + "\';"
+
+def getStaticAnimValue(connection, animID, orientation):
+    return connection.execute("SELECT orientation, x, y, sizeX, sizeY, padX, padY, n, nX FROM UnitStaticAnim WHERE unitAnimID = " + str(animID) + " AND orientation = \"" + orientation + "\";")
+
+def getAnimID(connection, unitName, animName):
+    unitID = getUnitID(connection, unitName)
+    if unitID != -1:
+        animCursor = connection.execute("SELECT * FROM UnitAnim WHERE unitID = " + str(unitID) + ";")
+        for anim in animCursor:
+            return int(anim[0])
+
+    return -1
+
+def getUnitID(connection, unitName):
+    unitCursor = connection.execute("SELECT * FROM Unit WHERE name = \"" + unitName + "\";")
+    for unit in unitCursor:
+        return str(unit[0])
+    return -1
+
+def getUnitName(connection, unitID):
+    unitCursor = connection.execute("SELECT name FROM Unit WHERE id = " + str(unitID) + ";")
+    for unit in unitCursor:
+        return unit[0]
+    return -1

@@ -9,6 +9,7 @@ from ClassTab import ClassTab
 from ItemTab import ItemTab
 from EditPower import EditPower
 from CreateWindowDatas import *
+from AnimationTab import *
 import tempfile
 import os
 
@@ -120,17 +121,17 @@ class DatabaseWindow(Gtk.Window):
         pass
 
     def openFile(self, widget):
-        self.fileManager.openFile(self.unitTab, self.handlePower, self)
+        self.fileManager.openFile(self.unitTab, self.animTab, self.handlePower, self)
 
     def saveAs(self, widget):
-        path = self.fileManager.saveAs(self,self.unitTab, self.handlePower)
+        path = self.fileManager.saveAs(self,self.unitTab, self.animTab, self.handlePower)
         if path != None:
             if self.sqlFile != None:
                 self.sqlFile.close()
                 self.sqlFile = None
 
     def save(self, widget):
-        self.fileManager.saveFile(self, self.unitTab, self.handlePower)
+        self.fileManager.saveFile(self, self.unitTab, self.animTab, self.handlePower)
 
     def addItem(self, widget):
         pass

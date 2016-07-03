@@ -6,7 +6,7 @@ class Tab(Gtk.Box):
 
         self.store     = store
         self.tree      = Gtk.TreeView(model = self.store)
-        self.tree.get_selection().set_mode(Gtk.SelectionMode.MULTIPLE)
+        self.tree.get_selection().set_mode(Gtk.SelectionMode.SINGLE)
         scrollWindow   = Gtk.ScrolledWindow()
         scrollWindow.add(self.tree)
 

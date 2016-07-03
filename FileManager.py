@@ -37,7 +37,7 @@ class FileManager:
         fileChooserDialog.destroy()
         return fileName
 
-    def saveFile(self, windowDatabase, unitTab, handlePower, path=None):
+    def saveFile(self, windowDatabase, unitTab, animTab, handlePower, path=None):
         if path == None:
             if self.path == None:
                 self.path = self.selectPath("Where to save the database ?")
@@ -48,7 +48,7 @@ class FileManager:
                     os.remove(self.path)
 
                 connection = initDatabase(self.path)
-                recreateDatabase(windowDatabase.classTab, unitTab, handlePower, connection)
+                recreateDatabase(windowDatabase.classTab, unitTab, animTab, handlePower, connection)
                 windowDatabase.database.close()
                 windowDatabase.database = connection
             else:
@@ -59,18 +59,18 @@ class FileManager:
             else:
                 self.path = path
                 connection = initDatabase(self.path)
-                recreateDatabase(windowDatabase.classTab, unitTab, handlePower, connection)
+                recreateDatabase(windowDatabase.classTab, unitTab, animTab, handlePower, connection)
                 windowDatabase.database.close()
                 windowDatabase.database = connection
 
-    def openFile(self, unitTab, handlePower, windowDatabase):
+    def openFile(self, unitTab, animTab, handlePower, windowDatabase):
         path = self.selectPath("Choose a file")
         if path != None:
             unitTab.clearEntries()
             handlePower.clearEntries()
             self.path = path
             windowDatabase.database.close()
-            windowDatabase.database = loadDatas(windowDatabase.classTab, unitTab, handlePower, path)
+            windowDatabase.database = loadDatas(windowDatabase.classTab, unitTab, animTab, handlePower, path)
             if windowDatabase.sqlFile:
                 windowDatabase.sqlFile.close()
                 windowDatabase.sqlFile = None

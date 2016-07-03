@@ -3,6 +3,7 @@ from globalVar import *
 from functions import *
 from TreeTab import TreeTab
 import databaseFunctions
+from AnimTypeModel import *
 
 class UnitTab(TreeTab):
     def __init__(self, window):
@@ -198,9 +199,10 @@ class UnitTab(TreeTab):
             databaseFunctions.addDatabaseEntry(self.databaseWindow.database, "UNIT", [str(v) for v in values])
             parent = self.getParent()
             if parent != None:
-                print("parent id" + str(model[parent][0]))
                 databaseFunctions.addDatabaseEntry(self.databaseWindow.database, "UnitTree", [str(model[parent][0]), str(values[0])])
-        TreeTab.addEntry(self)
+
+        AnimTypeModel.unitStore.append([values[nameID]])
+        TreeTab.addEntry(self, parent)
 
     def getInsertValue(self):
         descriptionBuffer = self.descriptionWidget.get_buffer()
