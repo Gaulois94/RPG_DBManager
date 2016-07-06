@@ -24,3 +24,7 @@ unitModel = [("ID", int),\
 itemModel = ["ID",
              "Name",
              "Description"]
+
+animModel = [("Unit Name", str),\
+             ("Animation Name", str),\
+             ("Type", str)]

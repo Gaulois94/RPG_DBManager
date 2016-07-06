@@ -14,7 +14,6 @@ class UnitTab(TreeTab):
             renderer = None
 
             if value[0] == "Type Name":
-                print("Combo !")
                 renderer = Gtk.CellRendererCombo()
                 renderer.set_property("model", window.classTab.store)
                 renderer.set_property("text-column", 0)

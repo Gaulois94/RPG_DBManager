@@ -22,6 +22,7 @@ class DatabaseWindow(Gtk.Window):
         self.classTab    = ClassTab(self)
         self.unitTab     = UnitTab(self)
         self.itemTab     = ItemTab(self)
+        self.animTab     = AnimationTab(self)
 
         vbox    = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
 
@@ -38,6 +39,7 @@ class DatabaseWindow(Gtk.Window):
 
         self.notebook.append_page(self.classTab, Gtk.Label("Class"))
         self.notebook.append_page(self.unitTab, Gtk.Label("Unit"))
+        self.notebook.append_page(self.animTab, Gtk.Label("Animation"))
 
         vbox.pack_start(self.uiManager.get_widget("/MenuBar"), False, False, 0)
         vbox.pack_start(self.uiManager.get_widget("/ToolBar"), False, False, 0)

@@ -39,6 +39,31 @@ sqlInitDB = """
                                      FOREIGN KEY(parent) REFERENCES Unit(id),
                                      FOREIGN KEY(child)  REFERENCES Unit(id));
 
+               CREATE TABLE UnitAnim(id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                     unitID INTEGER,
+                                     name VARCHAR(32),
+                                     type VARCHAR(32),
+                                     FOREIGN KEY(unitID) REFERENCES Unit(id));
+
+               CREATE TABLE UnitStaticAnim(unitAnimID INTEGER,
+                                           x          INTEGER,
+                                           y          INTEGER,
+                                           sizeY      INTEGER,
+                                           sizeX      INTEGER,
+                                           padX       INTEGER,
+                                           padY       INTEGER,
+                                           n          INTEGER,
+                                           nX         INTEGER,
+                                           FOREIGN KEY(unitAnimID) REFERENCES UnitAnim(id));
+
+               CREATE TABLE UnitDynamicAnim(unitAnimID INTEGER,
+                                            id         INTEGER,
+                                            left       INTEGER,
+                                            bottom     INTEGER,
+                                            sizeX      INTEGER,
+                                            sizeY      INTEGER,
+                                            FOREIGN KEY(unitAnimID) REFERENCES UnitAnim(id));
+
                CREATE TABLE Capacity(name VARCHAR(32) PRIMARY KEY,
                                      isGlobal TINYINT NOT NULL,
                                      type  VARCHAR(32),
