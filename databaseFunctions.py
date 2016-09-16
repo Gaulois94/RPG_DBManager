@@ -22,7 +22,6 @@ sqlInitDB = """
                                       level       INTEGER,
                                       price       INTEGER,
                                       occupation  INTEGER,
-                                      modelPath   TEXT,
                                       pv          INTEGER,
                                       mp          INTEGER,
                                       ad          INTEGER,
@@ -44,6 +43,7 @@ sqlInitDB = """
                                      unitID INTEGER,
                                      name VARCHAR(32),
                                      type VARCHAR(32),
+                                     modelPath   TEXT,
                                      FOREIGN KEY(unitID) REFERENCES Unit(id));
 
                CREATE TABLE UnitStaticAnim(unitAnimID INTEGER,
@@ -59,6 +59,7 @@ sqlInitDB = """
                                            FOREIGN KEY(unitAnimID) REFERENCES UnitAnim(id));
 
                CREATE TABLE UnitDynamicAnim(unitAnimID INTEGER,
+                                            orientation VARCHAR(32),
                                             id         INTEGER,
                                             left       INTEGER,
                                             bottom     INTEGER,
@@ -219,7 +220,8 @@ def loadDatas(classTab, unitTab, animTab, handlePower, path):
         if row[0] == "Unit":
             unitTab.idEntry = int(row[1])
         elif row[0] == "UnitAnim":
-            animTab.idEntry = int(row[1])
+            animTab.idEntry = int(row[1]) + 1
+            print("UnitAnim.idEntry : " + str(row[1]))
 
     return connection
 
@@ -230,14 +232,13 @@ def loadClass(classTab, connection):
 
 def loadUnit(unitTab, connection):
     cursor  = connection.execute("SELECT * FROM Unit")
-    modelIndex = 7
 
     treeCursor = connection.execute("SELECT * FROM UnitTree")
     unitDict = dict()
     unitTreeList = list()
 
     for row in cursor:
-        l = [row[x] for x in range(len(row)) if x != modelIndex]
+        l = [row[x] for x in range(len(row))]
         replaceNone(l)
         #The None is the TreeIter of this row. It is needed for the append function (parent of the TreeStore)
         l.append(None)
@@ -269,8 +270,8 @@ def loadAnim(animationTab, connection):
     for row in cursor:
         unitName = getUnitName(connection, row[1])
         if not unitName in parents:
-            parents[unitName] = animationTab.store.append(None, [unitName, "", ""])
-        animationTab.store.append(parents[unitName], [unitName, row[2], row[3]])
+            parents[unitName] = animationTab.store.append(None, [-1, unitName, "", "", ""])
+        animationTab.store.append(parents[unitName], [row[0], unitName, row[2], row[3], row[4]])
 
 def setDatabaseEntry(connection, t, key, entry, value):
     script = None
@@ -290,6 +291,11 @@ def setDatabaseEntry(connection, t, key, entry, value):
                     SET """ + entry.replace(" ", "") + " = " + str(value) +\
                    "WHERE id=\'" + key + "\';" 
 
+    elif t == "ANIM":
+        script = """UPDATE UnitAnim
+                    SET """ + entry.replace(" ", "") + " = \'" + str(value) +\
+                   "\' WHERE id=\'" + key + "\';" 
+
     if script != None:
         print(script)
         script = script.replace("\'\'", "NULL")
@@ -302,6 +308,12 @@ def setStaticAnimEntry(connection, animID, orientation, entry, value):
     print(script)
     connection.cursor().executescript(script)
 
+def setStaticAnimEntries(connection, animID, orientation, entries, value):
+    script = """UPDATE UnitStaticAnim
+                SET """ + str.join(', ', ["\'" + e + "\' = \'" + str(v) + "\'" for e, v in zip(entries, value)]) + \
+               "WHERE unitAnimID = " + str(animID) + " AND orientation = \"" + orientation + "\";"
+    print(script)
+    connection.cursor().executescript(script)
 
 def setDatabaseEntryKwargs(connection, t, kwargs):
     script = None
@@ -359,7 +371,7 @@ def addDatabaseEntry(connection, t, values):
         script = "INSERT INTO UnitTree(parent, child) VALUES (""" + str.join(', ', ["\"" + x + "\"" for x in values]) + ");"
 
     elif t == "UnitAnim":
-        script = "INSERT INTO UnitAnim(id, unitID, name, type) VALUES (" + str.join(', ', ["\"" + x + "\"" for x in values]) + ");"
+        script = "INSERT INTO UnitAnim(id, unitID, name, type, modelPath) VALUES (" + str.join(', ', ["\"" + x + "\"" for x in values]) + ");"
 
     elif t == "UnitStaticAnim" or t == "UnitDynamicAnim":
         script = "INSERT INTO " + t + " VALUES (" + str.join(', ', ["\"" + x + "\"" for x in values]) + ");"
