@@ -3,7 +3,7 @@ from globalVar import *
 from functions import *
 from TreeTab import TreeTab
 import databaseFunctions
-from AnimTypeModel import *
+import AnimTypeModel
 
 class UnitTab(TreeTab):
     def __init__(self, window):

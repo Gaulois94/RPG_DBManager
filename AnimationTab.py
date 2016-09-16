@@ -93,7 +93,7 @@ class AnimationTab(TreeTab):
         if parent == None:
             parent = self.store.append(None, [values[0], "", ""])
 
-        databaseFunctions.addDatabaseEntry(self.databaseWindow.database, "UnitAnim", [str(seld.idEntry), databaseFunctions.getUnitID(self.databaseWindow.database, values[0])] + values[1:])
+        databaseFunctions.addDatabaseEntry(self.databaseWindow.database, "UnitAnim", [str(self.idEntry), databaseFunctions.getUnitID(self.databaseWindow.database, values[0])] + values[1:])
         if values[2] == "Static":
             for orientation in ["TOP", "BOTTOM", "LEFT", "RIGHT"]:
                 databaseFunctions.addDatabaseEntry(self.databaseWindow.database, "UnitStaticAnim", [str(self.idEntry), orientation] + self.getDefaultStaticValue())
