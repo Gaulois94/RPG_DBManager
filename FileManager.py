@@ -26,10 +26,14 @@ class FileManager:
 
         return self.path
 
-    def selectPath(self, message):
+    def selectPath(self, message, mime=None):
         fileChooserDialog = Gtk.FileChooserDialog(message, databaseWindow, \
                             Gtk.FileChooserAction.SAVE, (Gtk.STOCK_SAVE, Gtk.ResponseType.OK, \
                             Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL))
+
+        if mime:
+            self.setFilter(fileChooserDialog, mime)
+
         response = fileChooserDialog.run()
         fileName = None
         if response == Gtk.ResponseType.OK:
@@ -64,7 +68,7 @@ class FileManager:
                 windowDatabase.database = connection
 
     def openFile(self, unitTab, animTab, handlePower, windowDatabase):
-        path = self.selectPath("Choose a file")
+        path = self.selectPath("Choose a file", "db")
         if path != None:
             unitTab.clearEntries()
             handlePower.clearEntries()
@@ -75,3 +79,19 @@ class FileManager:
                 windowDatabase.sqlFile.close()
                 windowDatabase.sqlFile = None
             self.path = path
+
+    def setFilter(self, dialog, mime):
+        if mime == "db":
+            filterDB = Gtk.FileFilter()
+            filterDB.set_name("Database File")
+            filterDB.add_mime_type("application/x-sqlite3")
+            dialog.add_filter(filterDB)
+
+        elif mime=="image":
+            filterImage = Gtk.FileFilter()
+            filterImage.set_name("Image File")
+            filterImage.add_mime_type("image/png")
+            filterImage.add_mime_type("image/jpeg")
+            filterImage.add_mime_type("image/bmp")
+            dialog.add_filter(filterImage)
+

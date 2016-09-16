@@ -25,8 +25,9 @@ itemModel = ["ID",
              "Name",
              "Description"]
 
-animModel = [("Unit Name", str),\
-             ("Animation Name", str),\
-             ("Type", str)]
+animModel = [("Unit Name", str, "unitName"),\
+             ("Animation Name", str, "name"),\
+             ("Type", str, "type"),\
+             ("Image Path", str, "modelPath")]
 
-staticModel = ["orientation", "x", "y", "posX", "posY", "padX", "padY", "n", "nX"]
+staticModel = ["orientation", "x", "y", "sizeX", "sizeY", "padX", "padY", "n", "nX"]
