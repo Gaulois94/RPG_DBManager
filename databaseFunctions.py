@@ -79,6 +79,10 @@ sqlInitDB = """
                                           FOREIGN KEY(idUnit) REFERENCES Unit(id),
                                           FOREIGN KEY(capacityName) REFERENCES Capacity(name));
 
+               CREATE TABLE Map(name VARCHAR(32) PRIMARY KEY,
+                                pathMap VARCHAR(64),
+                                pathMiniMap VARCHAR(64));
+
                CREATE TABLE ItemType(name VARCHAR(32) PRIMARY KEY);
             
                CREATE TABLE Item(id INTEGER PRIMARY KEY,
@@ -89,7 +93,7 @@ sqlInitDB = """
                VALUES ("Float"), ("Int"), ("String"), ("Bool");"""
                                    
 def initDatabase(path, reinit=True):
-    connection = sql.connect(path)
+    connection = sql.connect(path, isolation_level=None)
     if reinit:
         cursor = connection.cursor()
         script = sqlInitDB
@@ -296,6 +300,11 @@ def setDatabaseEntry(connection, t, key, entry, value):
                     SET """ + entry.replace(" ", "") + " = \'" + str(value) +\
                    "\' WHERE id=\'" + key + "\';" 
 
+    elif t == "Map":
+        script = """UPDATE UnitAnim
+                    SET """ + entry.replace(" ", "") + " = \'" + str(value) +\
+                   "\' WHERE name=\'" + key + "\';" 
+
     if script != None:
         print(script)
         script = script.replace("\'\'", "NULL")
@@ -374,6 +383,9 @@ def addDatabaseEntry(connection, t, values):
         script = "INSERT INTO UnitAnim(id, unitID, name, type, modelPath) VALUES (" + str.join(', ', ["\"" + x + "\"" for x in values]) + ");"
 
     elif t == "UnitStaticAnim" or t == "UnitDynamicAnim":
+        script = "INSERT INTO " + t + " VALUES (" + str.join(', ', ["\"" + x + "\"" for x in values]) + ");"
+
+    elif t == "Map":
         script = "INSERT INTO " + t + " VALUES (" + str.join(', ', ["\"" + x + "\"" for x in values]) + ");"
 
     if script != None:

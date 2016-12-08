@@ -31,3 +31,7 @@ animModel = [("Unit Name", str, "unitName"),\
              ("Image Path", str, "modelPath")]
 
 staticModel = ["orientation", "x", "y", "sizeX", "sizeY", "padX", "padY", "n", "nX"]
+
+mapModel = [("Name", str, "name"),\
+            ("Map Path", str, "path"),\
+            ("Minimap Path", str, "miniPath")]

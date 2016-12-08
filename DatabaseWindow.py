@@ -10,6 +10,7 @@ from ItemTab import ItemTab
 from EditPower import EditPower
 from CreateWindowDatas import *
 from AnimationTab import *
+from MapTab import *
 import tempfile
 import os
 
@@ -24,6 +25,7 @@ class DatabaseWindow(Gtk.Window):
         self.unitTab     = UnitTab(self)
         self.itemTab     = ItemTab(self)
         self.animTab     = AnimationTab(self)
+        self.mapTab      = MapTab(self)
 
         vbox    = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
 
@@ -38,9 +40,10 @@ class DatabaseWindow(Gtk.Window):
         self.notebook         = Gtk.Notebook()
         self.notebook.set_size_request(600, 300)
 
-        self.notebook.append_page(self.classTab, Gtk.Label("Class"))
-        self.notebook.append_page(self.unitTab, Gtk.Label("Unit"))
-        self.notebook.append_page(self.animTab, Gtk.Label("Animation"))
+        self.notebook.append_page(self.classTab, Gtk.Label("Classes"))
+        self.notebook.append_page(self.unitTab, Gtk.Label("Units"))
+        self.notebook.append_page(self.animTab, Gtk.Label("Animations"))
+        self.notebook.append_page(self.mapTab, Gtk.Label("Maps"))
 
         vbox.pack_start(self.uiManager.get_widget("/MenuBar"), False, False, 0)
         vbox.pack_start(self.uiManager.get_widget("/ToolBar"), False, False, 0)
